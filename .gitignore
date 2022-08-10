@@ -128,3 +128,25 @@ dmypy.json
 # Pyre type checker
 .pyre/
 data/
+
+mlruns/
+
+.ipynb_checkpoints
+.bin
+*.db
+
+*.parquet
+*.html
+*.csv
+
+.venv
+venv
+.idea
+**/artifacts/
+**/models/
+
+__pycache__/
+**.env
+**.terraform/
+**.terraform.lock*
+**terraform.tfstate*
