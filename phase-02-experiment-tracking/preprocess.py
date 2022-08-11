@@ -67,17 +67,20 @@ def run(raw_data_path: str, dest_data_path: str):
     X_train, y_train = read_data(
         os.path.join(raw_data_path, 'adult-train.csv'))
     X_val, y_val = read_data(os.path.join(raw_data_path, 'adult-val.csv'))
+    X_test, y_test = read_data(os.path.join(raw_data_path, 'adult-test.csv'))
 
     # scale the data
     scaler = StandardScaler()
     X_train_scaled = scale_data(X_train, scaler, fit_scaler=True)
     X_val_scaled = scale_data(X_val, scaler)
+    X_test_scaled = scale_data(X_test, scaler)
 
     # preprocess the data
     dv = DictVectorizer()
     X_train_vectorized, dv = preprocess_data(
         X_train_scaled, dv, fit_dv=True)
     X_val_vectorized, _ = preprocess_data(X_val_scaled, dv)
+    X_test_vectorized, _ = preprocess_data(X_test_scaled, dv)
 
     # create destination directory if not exists
     os.makedirs(dest_data_path, exist_ok=True)
@@ -89,6 +92,10 @@ def run(raw_data_path: str, dest_data_path: str):
                 os.path.join(dest_data_path, 'train.pkl'))
     dump_pickle((X_val_vectorized, y_val),
                 os.path.join(dest_data_path, 'val.pkl'))
+    dump_pickle((X_test_vectorized, y_test),
+                os.path.join(dest_data_path, 'test.pkl'))
+
+    print('Done')
     print('Preprocessed data saved to {}'.format(dest_data_path))
 
 
