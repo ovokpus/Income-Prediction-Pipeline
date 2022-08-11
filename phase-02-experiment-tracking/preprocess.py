@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.utils import resample
+from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction import DictVectorizer
 
@@ -15,12 +16,13 @@ def dump_pickle(data, filename):
 
 
 def read_data(filepath):
-    columns = ['age', 'workClass', 'financialWeight', 'education', 'educationNum', 'maritalStatus', 'occupation',
-               'relationship', 'race', 'sex', 'capitalGain', 'capitalLoss', 'hoursPerWeek', 'nativeCountry', 'incomeTarget']
+
+    df = pd.read_csv(filepath)
+
+    df.drop(['nativeCountry'], axis=1, inplace=True)
 
     target = 'incomeTarget'
 
-    df = pd.read_csv(filepath, names=columns)
     transformed_target = []
 
     for _, value in df['incomeTarget'].iteritems():
@@ -30,25 +32,17 @@ def read_data(filepath):
             transformed_target.append(1)
     df['incomeTarget'] = transformed_target
 
-    df.drop('nativeCountry', axis=1, inplace=True)
-
     y = df[target]
     X = df.drop('incomeTarget', axis=1, inplace=True)
     X = pd.get_dummies(df)
 
-    # Upsampling
-    X_upsampled, y_upsampled = resample(X[y == 1],
-                                        y[y == 1],
-                                        replace=True,
-                                        n_samples=X[y == 0].shape[0],
-                                        random_state=1)
+    # Upsample using SMOTE
+    sm = SMOTE(random_state=12)
+    X_train_sm, y_train_sm = sm.fit_resample(X, y)
 
-    X_upsampled = np.concatenate((X[y == 0], X_upsampled))
-    y_upsampled = np.concatenate((y[y == 0], y_upsampled))
+    df_new = pd.DataFrame(X_train_sm, columns=X.columns)
 
-    df_new = pd.DataFrame(X_upsampled, columns=X.columns)
-
-    return df_new, y_upsampled
+    return df_new, y_train_sm
 
 
 def scale_data(df: pd.DataFrame, scaler: StandardScaler, fit_scaler: bool = False):
@@ -72,7 +66,7 @@ def run(raw_data_path: str, dest_data_path: str):
     # load the csv files
     X_train, y_train = read_data(
         os.path.join(raw_data_path, 'adult-train.csv'))
-    X_val, y_val = read_data(os.path.join(raw_data_path, 'adult-test.csv'))
+    X_val, y_val = read_data(os.path.join(raw_data_path, 'adult-val.csv'))
 
     # scale the data
     scaler = StandardScaler()

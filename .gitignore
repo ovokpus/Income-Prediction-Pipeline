@@ -128,10 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 data/
-
 mlruns/
 
-.ipynb_checkpoints
 .bin
 *.db
 
