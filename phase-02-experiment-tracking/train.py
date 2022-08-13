@@ -4,13 +4,10 @@ import pickle
 import mlflow
 
 from xgboost import XGBClassifier
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 mlflow.set_tracking_uri("sqlite:///mlflow.db")
 mlflow.set_experiment("xgboost-classifiers")
-
-mlflow.sklearn.autolog()
-mlflow.xgboost.autolog()
 
 
 def load_pickle(filename: str):
@@ -29,11 +26,16 @@ def run(datapath):
         y_pred = clf.predict(X_valid)
 
         f1 = f1_score(y_valid, y_pred)
-        # mlflow.log_metric("f1", f1)
+        auc = roc_auc_score(y_valid, y_pred)
+        mlflow.log_metric("f1", f1)
+        mlflow.log_metric("auc", auc)
         print("f1 score: {}".format(f1))
+        print("auc score: {}".format(auc))
 
-        # mlflow.log_artifact(os.path.join(
-        #     datapath, 'train.pkl'), artifact_path='models_pickle')
+        mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
+
+        mlflow.log_artifact(os.path.join(
+            datapath, 'train.pkl'), artifact_path='models_mlflow')
 
 
 if __name__ == '__main__':
