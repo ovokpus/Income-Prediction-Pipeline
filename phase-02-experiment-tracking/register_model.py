@@ -12,7 +12,7 @@ from mlflow.tracking import MlflowClient
 from xgboost import XGBClassifier
 from sklearn.metrics import f1_score
 
-HPO_EXPERIMENT_NAME = 'xgboost-hyperopt'
+HPO_EXPERIMENT_NAME = 'xgboost-experiment'
 EXPERIMENT_NAME = 'xgboost-classifiers'
 
 mlflow.set_tracking_uri('http://localhost:5000')

@@ -10,7 +10,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 from xgboost import XGBClassifier
 
 mlflow.set_tracking_uri("sqlite:///mlflow.db")
-mlflow.set_experiment("xgboost-hyperopt")
+mlflow.set_experiment("xgboost-experiment")
 
 
 def load_pickle(filename: str):
