@@ -75,7 +75,7 @@ def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
 
 
 @task
-def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 50):
+def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 200):
     def _objective(params):
         with mlflow.start_run():
             mlflow.set_tag("model", "XGBClassifier")
@@ -115,7 +115,7 @@ def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 50):
 
 
 @task
-def train_best_model(X_train, y_train, X_val, y_val, dv):
+def train_best_model(X_train, y_train, X_val, y_val, dv, scaler):
     '''
     train the best model
     '''
@@ -137,14 +137,17 @@ def train_best_model(X_train, y_train, X_val, y_val, dv):
         y_pred = clf.predict(X_val)
         f1 = f1_score(y_val, y_pred)
         train_time = dt.now()
-        with open(f"models/preprocessor{train_time}.b", "wb") as f:
-            pickle.dump(dv, f)
-
-        mlflow.log_artifact(f"models/preprocessor{train_time}.b",
-                            artifact_path=f"preprocessor{train_time}")
-        mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
-
         mlflow.log_metric("f1", f1)
+
+        with open("../models/preprocessor.b", "wb") as f:
+            pickle.dump((dv, scaler), f)
+
+        with open("../models/clf.bin", "wb") as f1:
+            pickle.dump(clf, f1)
+
+        mlflow.log_artifact("../models/preprocessor.b",
+                            artifact_path=f"preprocessors")
+        mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
 
 
 @flow(task_runner=SequentialTaskRunner())
@@ -153,6 +156,7 @@ def main_flow(trainpath: str = "../data/adult-train.csv",
     """
     Main flow for the experiment.
     """
+    EXPERIMENT_NAME = "xgboost-pipeline"
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment(EXPERIMENT_NAME)
 
@@ -161,7 +165,7 @@ def main_flow(trainpath: str = "../data/adult-train.csv",
     X_val, y_val = read_data(valpath).result()
 
     # scale the data
-    scaler = StandardScaler()
+    scaler = StandardScaler(with_mean=False)
     X_train_scaled = scale_data(X_train, scaler, fit_scaler=True)
     X_val_scaled = scale_data(X_val, scaler)
 
@@ -174,7 +178,7 @@ def main_flow(trainpath: str = "../data/adult-train.csv",
     # train the model
     best_clf = train_model_search(X_train, y_train, X_val, y_val).result()
     train_best_model(X_train, y_train, X_val, y_val,
-                     dv, wait_for=best_clf).result()
+                     dv, scaler, wait_for=best_clf).result()
 
 
 from prefect.deployments import DeploymentSpec

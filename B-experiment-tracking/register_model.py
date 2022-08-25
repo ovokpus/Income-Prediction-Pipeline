@@ -57,9 +57,6 @@ def train_and_log_model(datapath, params):
         mlflow.log_metric('test_f1', test_f1)
         print(f"test_f1: {test_f1}")
 
-        with open(f"models/preprocessor{train_time}.bin", "wb") as f:
-            pickle.dump((dv, clf), f)
-
         mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
 
         mlflow.log_artifact(os.path.join(
