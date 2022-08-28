@@ -148,3 +148,5 @@ __pycache__/
 **.terraform/
 **.terraform.lock*
 **terraform.tfstate*
+
+D2-batch-prefect-deployment/**
