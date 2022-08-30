@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--datapath',
         type=str,
-        default='../data/processed'
+        default='./data/processed'
     )
 
     parser.add_argument(

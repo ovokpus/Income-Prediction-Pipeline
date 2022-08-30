@@ -102,9 +102,9 @@ def run(raw_data_path: str, dest_data_path: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--raw-data-path', type=str,
-                        default='../data/', help='path to raw data')
+                        default='./data/', help='path to raw data')
     parser.add_argument('--dest-data-path', type=str,
-                        default='../data/processed/', help='path to processed data')
+                        default='./data/processed/', help='path to processed data')
     args = parser.parse_args()
 
     # run the preprocessing
