@@ -48,4 +48,4 @@ def predict_income():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="localhost", port=9696)
+    app.run(debug=True, host="10.182.0.2", port=9696)

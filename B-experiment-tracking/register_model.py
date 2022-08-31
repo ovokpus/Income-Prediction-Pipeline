@@ -15,7 +15,7 @@ from sklearn.metrics import f1_score
 HPO_EXPERIMENT_NAME = 'xgboost-experiment'
 EXPERIMENT_NAME = 'xgboost-classifiers'
 
-mlflow.set_tracking_uri('http://10.138.0.2:5000')
+mlflow.set_tracking_uri('http://10.182.0.2:5000')
 mlflow.set_experiment(EXPERIMENT_NAME)
 
 # mlflow.sklearn.autolog()
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--datapath',
         type=str,
-        default='../data/processed/',
+        default='./data/processed/',
         help='path to processed data'
     )
 

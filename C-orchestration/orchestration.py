@@ -156,7 +156,7 @@ def main_flow(trainpath: str = "../data/adult-train.csv",
     """
     Main flow for the experiment.
     """
-    EXPERIMENT_NAME = "xgboost-pipeline"
+    EXPERIMENT_NAME = "xgboost-classifiers"
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment(EXPERIMENT_NAME)
 
@@ -182,14 +182,16 @@ def main_flow(trainpath: str = "../data/adult-train.csv",
 
 
 from prefect.deployments import DeploymentSpec
-from prefect.orion.schemas.schedules import CronSchedule
+from prefect.orion.schemas.schedules import IntervalSchedule
 from prefect.flow_runners import SubprocessFlowRunner
+from datetime import timedelta
 
 DeploymentSpec(
     flow=main_flow,
     name="model_training",
+    schedule=IntervalSchedule(interval=timedelta(minutes=1)),
     flow_runner=SubprocessFlowRunner(),
     tags=["ml", "xgboost"],
 )
 
-# main_flow()
+
