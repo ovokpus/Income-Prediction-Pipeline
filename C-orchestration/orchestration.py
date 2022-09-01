@@ -19,7 +19,7 @@ from prefect.task_runners import SequentialTaskRunner
 
 from datetime import datetime as dt
 
-EXPERIMENT_NAME = "xgboost-pipeline"
+EXPERIMENT_NAME = "xgboost-classifiers"
 mlflow.set_tracking_uri("sqlite:///mlflow.db")
 mlflow.set_experiment(EXPERIMENT_NAME)
 
@@ -75,7 +75,7 @@ def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
 
 
 @task
-def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 200):
+def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 20):
     def _objective(params):
         with mlflow.start_run():
             mlflow.set_tag("model", "XGBClassifier")
@@ -139,20 +139,20 @@ def train_best_model(X_train, y_train, X_val, y_val, dv, scaler):
         train_time = dt.now()
         mlflow.log_metric("f1", f1)
 
-        with open("../models/preprocessor.b", "wb") as f:
+        with open("./D-web-service-deployment/models/preprocessor.b", "wb") as f:
             pickle.dump((dv, scaler), f)
 
-        with open("../models/clf.bin", "wb") as f1:
+        with open("./D-web-service-deployment/models/clf.bin", "wb") as f1:
             pickle.dump(clf, f1)
 
-        mlflow.log_artifact("../models/preprocessor.b",
+        mlflow.log_artifact("./D-web-service-deployment/models/preprocessor.b",
                             artifact_path=f"preprocessors")
         mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
 
 
 @flow(task_runner=SequentialTaskRunner())
-def main_flow(trainpath: str = "../data/adult-train.csv",
-              valpath: str = "../data/adult-val.csv"):
+def main_flow(trainpath: str = "./data/adult-train.csv",
+              valpath: str = "./data/adult-val.csv"):
     """
     Main flow for the experiment.
     """
@@ -188,8 +188,8 @@ from datetime import timedelta
 
 DeploymentSpec(
     flow=main_flow,
-    name="model_training",
-    schedule=IntervalSchedule(interval=timedelta(minutes=1)),
+    name="income_prediction_training",
+    schedule=IntervalSchedule(interval=timedelta(minutes=5)),
     flow_runner=SubprocessFlowRunner(),
     tags=["ml", "xgboost"],
 )
