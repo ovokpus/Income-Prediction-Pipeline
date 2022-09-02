@@ -1,20 +1,22 @@
 import os
 import pickle
 import pandas as pd
+import xgboost
 
 import mlflow
 from flask import Flask, request, jsonify
 
 
-# logged_model = f"runs:/{RUN_ID}/model"
-# model = mlflow.pyfunc.load_model(logged_model)
-# dv, scaler = mlflow.pyfunc.load_artifact(logged_model, "dv", "scaler")
+mlflow.set_tracking_uri('http://10.138.0.5:5000')
+RUN_ID = os.getenv("MODEL_RUN_ID")
+logged_model = f"runs:/{RUN_ID}/models_mlflow"
+model = mlflow.pyfunc.load_model(logged_model)
 
 with open("./models/preprocessor.b", "rb") as f1:
     dv, scaler = pickle.load(f1)
 
-with open("./models/clf.bin", "rb") as f:
-    model = pickle.load(f)
+# with open("./models/clf.bin", "rb") as f:
+#     model = pickle.load(f)
 
 
 def predict(data):
@@ -47,4 +49,4 @@ def predict_income():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="10.182.0.2", port=8080)
+    app.run(debug=True, host="10.138.0.5", port=8080)

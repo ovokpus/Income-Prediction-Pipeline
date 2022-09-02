@@ -10,6 +10,7 @@ from sklearn.metrics import f1_score
 
 import mlflow
 from mlflow.tracking import MlflowClient
+from mlflow.entities import ViewType
 
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from hyperopt.pyll import scope
@@ -75,7 +76,7 @@ def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
 
 
 @task
-def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 20):
+def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 50):
     def _objective(params):
         with mlflow.start_run():
             mlflow.set_tag("model", "XGBClassifier")
@@ -85,6 +86,7 @@ def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 20):
             y_pred = clf.predict(X_val)
             f1 = f1_score(y_val, y_pred)
             mlflow.log_metric("f1", f1)
+            mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
 
         return {'loss': 1 - f1, 'status': STATUS_OK}
 
@@ -148,6 +150,9 @@ def train_best_model(X_train, y_train, X_val, y_val, dv, scaler):
         mlflow.log_artifact("./D-web-service-deployment/models/preprocessor.b",
                             artifact_path=f"preprocessors")
         mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
+    
+    return clf
+
 
 
 @flow(task_runner=SequentialTaskRunner())
@@ -157,7 +162,7 @@ def main_flow(trainpath: str = "./data/adult-train.csv",
     Main flow for the experiment.
     """
     EXPERIMENT_NAME = "xgboost-classifiers"
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_tracking_uri('http://10.138.0.5:5000')
     mlflow.set_experiment(EXPERIMENT_NAME)
 
     # load the csv files
@@ -179,6 +184,29 @@ def main_flow(trainpath: str = "./data/adult-train.csv",
     best_clf = train_model_search(X_train, y_train, X_val, y_val).result()
     train_best_model(X_train, y_train, X_val, y_val,
                      dv, scaler, wait_for=best_clf).result()
+    
+    
+    client = MlflowClient()
+     # Select the model with the highest test_f1 metric
+    experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
+    best_run = client.search_runs(
+        experiment_ids=experiment.experiment_id,
+        run_view_type=ViewType.ACTIVE_ONLY,
+        max_results=5,
+        order_by=['metrics.f1 DESC']
+    )[0]
+
+    print(f"best_run: {best_run}")
+
+    model_uri = f"runs:/{best_run.info.run_id}/models_mlflow"
+    print("model uri is: ", model_uri)
+
+    # register the best model
+    mlflow.register_model(
+        model_uri=model_uri,
+        name='xgb-classifier'
+    )
+    
 
 
 from prefect.deployments import DeploymentSpec
@@ -189,7 +217,7 @@ from datetime import timedelta
 DeploymentSpec(
     flow=main_flow,
     name="income_prediction_training",
-    schedule=IntervalSchedule(interval=timedelta(minutes=5)),
+    schedule=IntervalSchedule(interval=timedelta(minutes=240)),
     flow_runner=SubprocessFlowRunner(),
     tags=["ml", "xgboost"],
 )

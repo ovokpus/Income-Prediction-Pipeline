@@ -6,7 +6,7 @@ import mlflow
 from xgboost import XGBClassifier
 from sklearn.metrics import f1_score, roc_auc_score
 
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_tracking_uri('http://10.138.0.5:5000')
 mlflow.set_experiment("xgboost-classifiers")
 
 
