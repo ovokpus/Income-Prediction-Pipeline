@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import resample
 from imblearn.over_sampling import SMOTE
-from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction import DictVectorizer
 
 
@@ -45,12 +44,6 @@ def read_data(filepath):
     return df_new, y_train_sm
 
 
-def scale_data(df: pd.DataFrame, scaler: StandardScaler, fit_scaler: bool = False):
-    if fit_scaler:
-        X = scaler.fit_transform(df)
-    X = scaler.transform(df)
-    return pd.DataFrame(X, columns=df.columns)
-
 
 def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
     dicts = df.to_dict(orient='records')
@@ -69,25 +62,18 @@ def run(raw_data_path: str, dest_data_path: str):
     X_val, y_val = read_data(os.path.join(raw_data_path, 'adult-val.csv'))
     X_test, y_test = read_data(os.path.join(raw_data_path, 'adult-test.csv'))
 
-    # scale the data
-    scaler = StandardScaler()
-    X_train_scaled = scale_data(X_train, scaler, fit_scaler=True)
-    X_val_scaled = scale_data(X_val, scaler)
-    X_test_scaled = scale_data(X_test, scaler)
-
     # preprocess the data
     dv = DictVectorizer()
     X_train_vectorized, dv = preprocess_data(
-        X_train_scaled, dv, fit_dv=True)
-    X_val_vectorized, _ = preprocess_data(X_val_scaled, dv)
-    X_test_vectorized, _ = preprocess_data(X_test_scaled, dv)
+        X_train, dv, fit_dv=True)
+    X_val_vectorized, _ = preprocess_data(X_val, dv)
+    X_test_vectorized, _ = preprocess_data(X_test, dv)
 
     # create destination directory if not exists
     os.makedirs(dest_data_path, exist_ok=True)
 
     # dump the data
     dump_pickle(dv, os.path.join(dest_data_path, 'dv.pkl'))
-    dump_pickle(scaler, os.path.join(dest_data_path, 'scaler.pkl'))
     dump_pickle((X_train_vectorized, y_train),
                 os.path.join(dest_data_path, 'train.pkl'))
     dump_pickle((X_val_vectorized, y_val),

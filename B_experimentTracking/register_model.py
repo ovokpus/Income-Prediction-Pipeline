@@ -12,8 +12,8 @@ from mlflow.tracking import MlflowClient
 from xgboost import XGBClassifier
 from sklearn.metrics import f1_score
 
-HPO_EXPERIMENT_NAME = 'xgboost-experiment'
-EXPERIMENT_NAME = 'xgboost-classifiers'
+HPO_EXPERIMENT_NAME = 'xgboost-hyperoptimization'
+EXPERIMENT_NAME = 'registry'
 
 mlflow.set_tracking_uri('http://10.138.0.5:5000')
 mlflow.set_experiment(EXPERIMENT_NAME)

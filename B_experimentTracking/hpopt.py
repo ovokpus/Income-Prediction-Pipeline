@@ -10,7 +10,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 from xgboost import XGBClassifier
 
 mlflow.set_tracking_uri('http://10.138.0.5:5000')
-mlflow.set_experiment("xgboost-experiment")
+mlflow.set_experiment("xgboost-hyperoptimization")
 
 
 def load_pickle(filename: str):

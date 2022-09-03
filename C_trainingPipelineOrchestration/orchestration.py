@@ -20,8 +20,8 @@ from prefect.task_runners import SequentialTaskRunner
 
 from datetime import datetime as dt
 
-EXPERIMENT_NAME = "xgboost-classifiers"
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
+EXPERIMENT_NAME = "xgboost-pipeline"
+mlflow.set_tracking_uri("http://10.138.0.5:5000")
 mlflow.set_experiment(EXPERIMENT_NAME)
 
 
@@ -55,15 +55,6 @@ def read_data(filepath):
 
     return df_new, y_train_sm
 
-
-@task
-def scale_data(df: pd.DataFrame, scaler: StandardScaler, fit_scaler: bool = False):
-    if fit_scaler:
-        X = scaler.fit_transform(df)
-    X = scaler.transform(df)
-    return pd.DataFrame(X, columns=df.columns)
-
-
 @task
 def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
     dicts = df.to_dict(orient='records')
@@ -76,7 +67,7 @@ def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
 
 
 @task
-def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 50):
+def train_model_search(X_train, y_train, X_val, y_val, num_trials: int=500):
     def _objective(params):
         with mlflow.start_run():
             mlflow.set_tag("model", "XGBClassifier")
@@ -117,7 +108,7 @@ def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 50):
 
 
 @task
-def train_best_model(X_train, y_train, X_val, y_val, dv, scaler):
+def train_best_model(X_train, y_train, X_val, y_val, dv):
     '''
     train the best model
     '''
@@ -141,13 +132,13 @@ def train_best_model(X_train, y_train, X_val, y_val, dv, scaler):
         train_time = dt.now()
         mlflow.log_metric("f1", f1)
 
-        with open("./D-web-service-deployment/models/preprocessor.b", "wb") as f:
-            pickle.dump((dv, scaler), f)
+        with open("./models/preprocessor.b", "wb") as f:
+            pickle.dump(dv, f)
 
-        with open("./D-web-service-deployment/models/clf.bin", "wb") as f1:
+        with open("./models/clf.bin", "wb") as f1:
             pickle.dump(clf, f1)
 
-        mlflow.log_artifact("./D-web-service-deployment/models/preprocessor.b",
+        mlflow.log_artifact("./models/preprocessor.b",
                             artifact_path=f"preprocessors")
         mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
     
@@ -161,7 +152,7 @@ def main_flow(trainpath: str = "./data/adult-train.csv",
     """
     Main flow for the experiment.
     """
-    EXPERIMENT_NAME = "xgboost-classifiers"
+    EXPERIMENT_NAME = "xgboost-pipeline"
     mlflow.set_tracking_uri('http://10.138.0.5:5000')
     mlflow.set_experiment(EXPERIMENT_NAME)
 
@@ -169,21 +160,16 @@ def main_flow(trainpath: str = "./data/adult-train.csv",
     X_train, y_train = read_data(trainpath).result()
     X_val, y_val = read_data(valpath).result()
 
-    # scale the data
-    scaler = StandardScaler(with_mean=False)
-    X_train_scaled = scale_data(X_train, scaler, fit_scaler=True)
-    X_val_scaled = scale_data(X_val, scaler)
-
     # preprocess the data
     dv = DictVectorizer()
     X_train_preprocessed, dv = preprocess_data(
-        X_train_scaled, dv, fit_dv=True).result()
-    X_val_preprocessed = preprocess_data(X_val_scaled, dv).result()[0]
+        X_train, dv, fit_dv=True).result()
+    X_val_preprocessed = preprocess_data(X_val, dv).result()[0]
 
     # train the model
     best_clf = train_model_search(X_train, y_train, X_val, y_val).result()
     train_best_model(X_train, y_train, X_val, y_val,
-                     dv, scaler, wait_for=best_clf).result()
+                     dv, wait_for=best_clf).result()
     
     
     client = MlflowClient()

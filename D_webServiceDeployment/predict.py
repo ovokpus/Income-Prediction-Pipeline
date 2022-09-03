@@ -21,9 +21,7 @@ with open("./models/preprocessor.b", "rb") as f1:
 
 def predict(data):
     dict_features = dv.transform(data)
-    scaled_features = scaler.transform(
-        dict_features)
-    preds = model.predict(scaled_features)
+    preds = model.predict(dict_features)
     return float(preds[0])
 
 
