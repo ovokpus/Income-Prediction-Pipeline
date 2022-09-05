@@ -1,17 +1,28 @@
 datasets:
-  taxi:
+  census:
     column_mapping:
       categorical_features:
-        - 'PULocationID'
-        - 'DOLocationID'
+        - 'workClass'
+        - 'education'
+        - 'maritalStatus'
+        - 'occupation'
+        - 'relationship'
+        - 'race'
+        - 'sex'
+        - 'nativeCountry'
       numerical_features:
-        - 'trip_distance'
+        - 'age'
+        - 'financialWeight'
+        - 'educationNum'
+        - 'capitalGain'
+        - 'capitalLoss'
+        - 'hoursPerWeek'
     data_format:
       header: true
       separator: ','
     monitors:
       - data_drift
-    reference_file: ./datasets/green_tripdata_2021-01.parquet
+    reference_file: ./datasets/adult-train.csv
 service:
   calculation_period_sec: 2
   min_reference_size: 30

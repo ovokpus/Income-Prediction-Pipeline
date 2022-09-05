@@ -4,7 +4,7 @@ RUN pip install -U pip
 
 RUN pip install pipenv
 
-ENV MODEL_RUN_ID="004f2d4c83fc467cbbd80fac1ff070d8"
+ENV MODEL_RUN_ID="434e8043496c4d61ae917c1f0ef843ba"
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY ["predict.py", "./"]
 
 COPY ["models/", "models/"]
 
-COPY ["mlruns/", "mlruns/"]
+# COPY ["mlruns/", "mlruns/"]
 
 EXPOSE 9696
 

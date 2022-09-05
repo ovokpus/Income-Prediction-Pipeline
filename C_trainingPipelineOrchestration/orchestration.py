@@ -55,6 +55,7 @@ def read_data(filepath):
 
     return df_new, y_train_sm
 
+
 @task
 def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
     dicts = df.to_dict(orient='records')
@@ -67,7 +68,7 @@ def preprocess_data(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
 
 
 @task
-def train_model_search(X_train, y_train, X_val, y_val, num_trials: int=500):
+def train_model_search(X_train, y_train, X_val, y_val, num_trials: int = 50):
     def _objective(params):
         with mlflow.start_run():
             mlflow.set_tag("model", "XGBClassifier")
@@ -141,9 +142,8 @@ def train_best_model(X_train, y_train, X_val, y_val, dv):
         mlflow.log_artifact("./models/preprocessor.b",
                             artifact_path=f"preprocessors")
         mlflow.xgboost.log_model(clf, artifact_path="models_mlflow")
-    
-    return clf
 
+    return clf
 
 
 @flow(task_runner=SequentialTaskRunner())
@@ -170,10 +170,9 @@ def main_flow(trainpath: str = "./data/adult-train.csv",
     best_clf = train_model_search(X_train, y_train, X_val, y_val).result()
     train_best_model(X_train, y_train, X_val, y_val,
                      dv, wait_for=best_clf).result()
-    
-    
+
     client = MlflowClient()
-     # Select the model with the highest test_f1 metric
+    # Select the model with the highest test_f1 metric
     experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
     best_run = client.search_runs(
         experiment_ids=experiment.experiment_id,
@@ -192,7 +191,6 @@ def main_flow(trainpath: str = "./data/adult-train.csv",
         model_uri=model_uri,
         name='xgb-classifier'
     )
-    
 
 
 from prefect.deployments import DeploymentSpec
@@ -207,5 +205,3 @@ DeploymentSpec(
     flow_runner=SubprocessFlowRunner(),
     tags=["ml", "xgboost"],
 )
-
-

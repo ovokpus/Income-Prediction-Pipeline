@@ -12,7 +12,7 @@ networks:
 services:
   prediction_service:
     build:
-      context: prediction_service
+      context: D_webServiceDeployment
       dockerfile: Dockerfile
     depends_on:
       - evidently_service
@@ -27,13 +27,13 @@ services:
       - front-tier
   evidently_service:
     build:
-      context: evidently_service
+      context: E_monitoringServices
       dockerfile: Dockerfile
     depends_on:
       - grafana
     volumes:
-      - ./evidently_service/datasets:/app/datasets
-      - ./evidently_service/config.yaml:/app/config.yaml
+      - ./E_monitoringServices/datasets:/app/datasets
+      - ./E_monitoringServices/config.yaml:/app/config.yaml
     ports:
       - "8085:8085"
     networks:
@@ -43,7 +43,7 @@ services:
   prometheus:
     image: prom/prometheus
     volumes:
-      - ./evidently_service/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./E_monitoringServices/config/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -62,9 +62,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./evidently_service/config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
-      - ./evidently_service/config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
-      - ./evidently_service/dashboards:/opt/grafana/dashboards
+      - ./E_monitoringServices/config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./E_monitoringServices/config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./E_monitoringServices/dashboards:/opt/grafana/dashboards
       - grafana_data:/var/lib/grafana
     networks:
       - back-tier

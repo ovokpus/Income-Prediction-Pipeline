@@ -48,7 +48,8 @@ logging.basicConfig(
 )
 
 # Add prometheus wsgi middleware to route /metrics requests
-app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/metrics": prometheus_client.make_wsgi_app()})
+app.wsgi_app = DispatcherMiddleware(
+    app.wsgi_app, {"/metrics": prometheus_client.make_wsgi_app()})
 
 
 @dataclasses.dataclass
@@ -120,7 +121,8 @@ class MonitoringService:
         window_size = self.window_size
 
         if dataset_name in self.current:
-            current_data = self.current[dataset_name].append(new_rows, ignore_index=True)
+            current_data = self.current[dataset_name].append(
+                new_rows, ignore_index=True)
 
         else:
             current_data = new_rows
@@ -129,19 +131,22 @@ class MonitoringService:
 
         if current_size > self.window_size:
             # cut current_size by window size value
-            current_data.drop(index=list(range(0, current_size - self.window_size)), inplace=True)
+            current_data.drop(index=list(
+                range(0, current_size - self.window_size)), inplace=True)
             current_data.reset_index(drop=True, inplace=True)
 
         self.current[dataset_name] = current_data
 
         if current_size < window_size:
-            logging.info(f"Not enough data for measurement: {current_size} of {window_size}." f" Waiting more data")
+            logging.info(
+                f"Not enough data for measurement: {current_size} of {window_size}." f" Waiting more data")
             return
 
         next_run_time = self.next_run_time.get(dataset_name)
 
         if next_run_time is not None and next_run_time > datetime.datetime.now():
-            logging.info("Next run for dataset %s at %s", dataset_name, next_run_time)
+            logging.info("Next run for dataset %s at %s",
+                         dataset_name, next_run_time)
             return
 
         self.next_run_time[dataset_name] = datetime.datetime.now() + datetime.timedelta(
@@ -164,7 +169,8 @@ class MonitoringService:
                 continue
 
             if found is None:
-                found = prometheus_client.Gauge(metric_key, "", list(sorted(labels.keys())))
+                found = prometheus_client.Gauge(
+                    metric_key, "", list(sorted(labels.keys())))
                 self.metrics[metric_key] = found
 
             try:
@@ -172,7 +178,8 @@ class MonitoringService:
 
             except ValueError as error:
                 # ignore errors sending other metrics
-                logging.error("Value error for metric %s, error: ", metric_key, error)
+                logging.error(
+                    "Value error for metric %s, error: ", metric_key, error)
 
 
 SERVICE: Optional[MonitoringService] = None
@@ -182,7 +189,8 @@ SERVICE: Optional[MonitoringService] = None
 def configure_service():
     # pylint: disable=global-statement
     global SERVICE
-    config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
+    config_file_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "config.yaml")
 
     # try to find a config file, it should be generated via the data preparation script
     if not os.path.exists(config_file_path):
@@ -197,20 +205,29 @@ def configure_service():
 
     for dataset_name, dataset_options in config["datasets"].items():
         reference_file = dataset_options['reference_file']
-        logging.info(f"Load reference data for dataset {dataset_name} from {reference_file}")
-        reference_data = pq.read_table(reference_file).to_pandas()
-        reference_data['duration'] = reference_data.lpep_dropoff_datetime - reference_data.lpep_pickup_datetime
-        reference_data.duration = reference_data.duration.apply(lambda td: td.total_seconds() / 60)
-        reference_data = reference_data[(reference_data.duration >= 1) & (reference_data.duration <= 60)]
+        logging.info(
+            f"Load reference data for dataset {dataset_name} from {reference_file}")
+        reference_data = pd.read_csv(reference_file)
+
+        transformed_target = []
+        for _, value in reference_data['incomeTarget'].iteritems():
+            if value == ' <=50K':
+                transformed_target.append(0)
+            else:
+                transformed_target.append(1)
+        reference_data['incomeTarget'] = transformed_target
+
         datasets[dataset_name] = LoadedDataset(
             name=dataset_name,
             references=reference_data,
             monitors=dataset_options['monitors'],
             column_mapping=ColumnMapping(**dataset_options["column_mapping"])
         )
-        logging.info("Reference is loaded for dataset %s: %s rows", dataset_name, len(reference_data))
+        logging.info("Reference is loaded for dataset %s: %s rows",
+                     dataset_name, len(reference_data))
 
-    SERVICE = MonitoringService(datasets=datasets, window_size=options.window_size)
+    SERVICE = MonitoringService(
+        datasets=datasets, window_size=options.window_size)
 
 
 @app.route("/iterate/<dataset>", methods=["POST"])
@@ -221,7 +238,8 @@ def iterate(dataset: str):
     if SERVICE is None:
         return "Internal Server Error: service not found", 500
 
-    SERVICE.iterate(dataset_name=dataset, new_rows=pd.DataFrame.from_dict(item))
+    SERVICE.iterate(dataset_name=dataset,
+                    new_rows=pd.DataFrame.from_dict(item))
     return "ok"
 
 
