@@ -41,6 +41,7 @@ def read_data(filepath):
 
     return df_new, y_train_sm
 
+
 df, target = read_data("../data/adult-test.csv")
 df['target'] = target
 table = pa.Table.from_pandas(df)
@@ -57,9 +58,14 @@ class DateTimeEncoder(json.JSONEncoder):
 with open("target.csv", 'w') as f_target:
     for row in data:
         row['id'] = str(uuid.uuid4())
-        f_target.write(f"{row['id']},{row['target']}\n")
+
         resp = requests.post("http://10.138.0.5:9696/predict",
                              headers={"Content-Type": "application/json"},
                              data=json.dumps(row, cls=DateTimeEncoder)).json()
-        print(f"prediction: {resp['income_class'], resp['message']}", row['target'])
+        row['prediction'] = resp['income_class']
+
+        f_target.write(f"{row['id']},{row['target']},{row['prediction']}\n")
+
+        print(
+            f"prediction: {resp['income_class'], resp['message']}", row['target'])
         sleep(1)
