@@ -1,0 +1,88 @@
+datasets:
+  census:
+    column_mapping:
+      categorical_features:
+        - 'workClass_ ?'
+        - 'workClass_ Federal-gov'
+        - 'workClass_ Local-gov' 
+        - 'workClass_ Never-worked'
+        - 'workClass_ Private'
+        - 'workClass_ Self-emp-inc'
+        - 'workClass_ Self-emp-not-inc'
+        - 'workClass_ State-gov'
+        - 'workClass_ Without-pay'
+        - 'education_ 10th'
+        - 'education_ 11th'
+        - 'education_ 12th'
+        - 'education_ 1st-4th'
+        - 'education_ 5th-6th'
+        - 'education_ 7th-8th'
+        - 'education_ 9th'
+        - 'education_ Assoc-acdm'
+        - 'education_ Assoc-voc'
+        - 'education_ Bachelors'
+        - 'education_ Doctorate'
+        - 'education_ HS-grad'
+        - 'education_ Masters'
+        - 'education_ Preschool'
+        - 'education_ Prof-school'
+        - 'education_ Some-college'
+        - 'maritalStatus_ Divorced'
+        - 'maritalStatus_ Married-AF-spouse'
+        - 'maritalStatus_ Married-civ-spouse'
+        - 'maritalStatus_ Married-spouse-absent'
+        - 'maritalStatus_ Never-married'
+        - 'maritalStatus_ Separated'
+        - 'maritalStatus_ Widowed'
+        - 'occupation_ ?'
+        - 'occupation_ Adm-clerical'
+        - 'occupation_ Armed-Forces'
+        - 'occupation_ Craft-repair'
+        - 'occupation_ Exec-managerial'
+        - 'occupation_ Farming-fishing'
+        - 'occupation_ Handlers-cleaners'
+        - 'occupation_ Machine-op-inspct'
+        - 'occupation_ Other-service'
+        - 'occupation_ Priv-house-serv'
+        - 'occupation_ Prof-specialty'
+        - 'occupation_ Protective-serv'
+        - 'occupation_ Sales'
+        - 'occupation_ Tech-support'
+        - 'occupation_ Transport-moving'
+        - 'relationship_ Husband'
+        - 'relationship_ Not-in-family'
+        - 'relationship_ Other-relative'
+        - 'relationship_ Own-child'
+        - 'relationship_ Unmarried'
+        - 'relationship_ Wife'
+        - 'race_ Amer-Indian-Eskimo'
+        - 'race_ Asian-Pac-Islander'
+        - 'race_ Black'
+        - 'race_ Other'
+        - 'race_ White'
+        - 'sex_ Female'
+        - 'sex_ Male'
+      numerical_features:
+        - 'age'
+        - 'financialWeight'
+        - 'educationNum'
+        - 'capitalGain'
+        - 'capitalLoss'
+        - 'hoursPerWeek'
+      task: classification
+    data_format:
+      header: true
+      separator: ','
+    monitors:
+      - data_drift
+      - cat_target_drift
+      - classification_performance
+      - data_quality
+    reference_file: ./datasets/adult-train.csv
+service:
+  calculation_period_sec: 2
+  min_reference_size: 30
+  moving_reference: false
+  datasets_path: datasets
+  use_reference: true
+  window_size: 5

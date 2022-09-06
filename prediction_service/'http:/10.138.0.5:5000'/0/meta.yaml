@@ -1,0 +1,4 @@
+artifact_location: '''http://10.138.0.5:5000''/0'
+experiment_id: '0'
+lifecycle_stage: active
+name: Default
