@@ -1,4 +1,14 @@
 scikit-learn
+numpy
+pandas
+matplotlib
+seaborn
+imblearn
+mlflow
+prefect
+xgboost
+pickle
+hyperopt
 dataclasses==0.6
 Flask~=2.0.1
 pandas>=1.1.5
@@ -10,3 +20,4 @@ tqdm
 pyarrow
 pymongo
 evidently
+pre-commit
