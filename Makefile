@@ -13,3 +13,7 @@ build: quality_checks test
 	docker-compose up
 
 publish: build
+
+setup:
+	pip install -r requirements.txt
+	pre-commit install
