@@ -6,6 +6,4 @@
 
 ---
 
-<div>
-<img src="https://user-images.githubusercontent.com/64817005/181875735-443f0a23-b39f-41dc-b7a6-5823b2a4086e.png">
-</div>
+![image](https://user-images.githubusercontent.com/64817005/189513833-3e36e0a6-3737-4a33-9231-25e43f36395d.png)
