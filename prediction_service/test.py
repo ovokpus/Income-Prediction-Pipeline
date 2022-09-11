@@ -14,9 +14,9 @@ data_point = {
     "capitalGain": 0,
     "capitalLoss": 0,
     "hoursPerWeek": 40,
-    "nativeCountry": "United-States"
+    "nativeCountry": "United-States",
 }
 
-url = 'http://localhost:9696/predict'
+url = "http://localhost:9696/predict"
 response = requests.post(url, json=data_point)
 print(response.json())

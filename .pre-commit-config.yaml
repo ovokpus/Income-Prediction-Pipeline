@@ -9,31 +9,31 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
 
--   repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
-        name: isort (python)
+# -   repo: https://github.com/pycqa/isort
+#     rev: 5.10.1
+#     hooks:
+#       - id: isort
+#         name: isort (python)
 
--   repo: https://github.com/psf/black
-    rev: stable
-    hooks:
-    - id: black
-      language_version: python3.8
+# -   repo: https://github.com/psf/black
+#     rev: stable
+#     hooks:
+#     - id: black
+#       language_version: python3.8
 
--   repo: local
-    hooks:
-    - id: pylint
-      name: pylint
-      entry: pylint
-      language: system
-      types: [python]
-      args:
-        [
-          "-rn", # Only display messages
-          "-sn", # Don't display the score
-          "--recursive=y"
-        ]
+# -   repo: local
+#     hooks:
+#     - id: pylint
+#       name: pylint
+#       entry: pylint
+#       language: system
+#       types: [python]
+#       args:
+#         [
+#           "-rn", # Only display messages
+#           "-sn", # Don't display the score
+#           "--recursive=y"
+#         ]
 
 -   repo: local
     hooks:

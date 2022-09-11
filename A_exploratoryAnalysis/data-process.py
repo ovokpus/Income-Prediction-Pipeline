@@ -2,14 +2,28 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-
-columns = ['age', 'workClass', 'financialWeight', 'education', 'educationNum', 'maritalStatus', 'occupation',
-           'relationship', 'race', 'sex', 'capitalGain', 'capitalLoss', 'hoursPerWeek', 'nativeCountry', 'incomeTarget']
+columns = [
+    "age",
+    "workClass",
+    "financialWeight",
+    "education",
+    "educationNum",
+    "maritalStatus",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "capitalGain",
+    "capitalLoss",
+    "hoursPerWeek",
+    "nativeCountry",
+    "incomeTarget",
+]
 
 
 print(len(columns))
 
-df = pd.read_csv('../data/adult-data.csv', names=columns)
+df = pd.read_csv("../data/adult-data.csv", names=columns)
 
 
 traindata, valdata = train_test_split(df, test_size=0.3, random_state=1)

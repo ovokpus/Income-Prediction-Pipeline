@@ -9,69 +9,67 @@ The service gets a reference dataset from reference.csv file and process current
 
 Metrics calculation results are available with `GET /metrics` HTTP method in Prometheus compatible format.
 """
-import hashlib
-import os
-
 import dataclasses
 import datetime
+import hashlib
 import logging
-from typing import Dict
-from typing import List
-from typing import Optional
+import os
+from typing import Dict, List, Optional
 
 import flask
 import pandas as pd
-from imblearn.over_sampling import SMOTE
 import prometheus_client
-from pyarrow import parquet as pq
-from flask import Flask
 import yaml
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
-
+from evidently.model_monitoring import (
+    CatTargetDriftMonitor,
+    ClassificationPerformanceMonitor,
+    DataDriftMonitor,
+    DataQualityMonitor,
+    ModelMonitoring,
+    NumTargetDriftMonitor,
+    ProbClassificationPerformanceMonitor,
+    RegressionPerformanceMonitor,
+)
 from evidently.pipeline.column_mapping import ColumnMapping
-from evidently.model_monitoring import ModelMonitoring
-from evidently.model_monitoring import CatTargetDriftMonitor
-from evidently.model_monitoring import ClassificationPerformanceMonitor
-from evidently.model_monitoring import DataDriftMonitor
-from evidently.model_monitoring import DataQualityMonitor
-from evidently.model_monitoring import NumTargetDriftMonitor
-from evidently.model_monitoring import ProbClassificationPerformanceMonitor
-from evidently.model_monitoring import RegressionPerformanceMonitor
-
-from evidently.runner.loader import DataLoader
-from evidently.runner.loader import DataOptions
-
+from evidently.runner.loader import DataLoader, DataOptions
+from flask import Flask
+from imblearn.over_sampling import SMOTE
+from pyarrow import parquet as pq
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 app = Flask(__name__)
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.StreamHandler()]
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()],
 )
 
 # Add prometheus wsgi middleware to route /metrics requests
 app.wsgi_app = DispatcherMiddleware(
-    app.wsgi_app, {"/metrics": prometheus_client.make_wsgi_app()})
+    app.wsgi_app, {"/metrics": prometheus_client.make_wsgi_app()}
+)
 
 
 def read_data(filepath):
 
     df = pd.read_csv(filepath)
 
-    df.drop(['nativeCountry'], axis=1, inplace=True)
+    df.drop(["nativeCountry"], axis=1, inplace=True)
 
-    target = 'incomeTarget'
+    target = "incomeTarget"
 
     transformed_target = []
 
-    for _, value in df['incomeTarget'].iteritems():
-        if value == ' <=50K':
+    for _, value in df["incomeTarget"].iteritems():
+        if value == " <=50K":
             transformed_target.append(0)
         else:
             transformed_target.append(1)
-    df['incomeTarget'] = transformed_target
+    df["incomeTarget"] = transformed_target
 
     y = df[target]
-    X = df.drop('incomeTarget', axis=1, inplace=True)
+    X = df.drop("incomeTarget", axis=1, inplace=True)
     X = pd.get_dummies(df)
 
     # Upsample using SMOTE
@@ -126,11 +124,7 @@ class MonitoringService:
     calculation_period_sec: float = 15
     window_size: int
 
-    def __init__(
-        self,
-        datasets: Dict[str, LoadedDataset],
-        window_size: int
-    ):
+    def __init__(self, datasets: Dict[str, LoadedDataset], window_size: int):
         self.reference = {}
         self.monitoring = {}
         self.current = {}
@@ -140,7 +134,10 @@ class MonitoringService:
         for dataset_info in datasets.values():
             self.reference[dataset_info.name] = dataset_info.references
             self.monitoring[dataset_info.name] = ModelMonitoring(
-                monitors=[EVIDENTLY_MONITORS_MAPPING[k]() for k in dataset_info.monitors], options=[]
+                monitors=[
+                    EVIDENTLY_MONITORS_MAPPING[k]() for k in dataset_info.monitors
+                ],
+                options=[],
             )
             self.column_mapping[dataset_info.name] = dataset_info.column_mapping
 
@@ -153,7 +150,8 @@ class MonitoringService:
 
         if dataset_name in self.current:
             current_data = self.current[dataset_name].append(
-                new_rows, ignore_index=True)
+                new_rows, ignore_index=True
+            )
 
         else:
             current_data = new_rows
@@ -162,29 +160,33 @@ class MonitoringService:
 
         if current_size > self.window_size:
             # cut current_size by window size value
-            current_data.drop(index=list(
-                range(0, current_size - self.window_size)), inplace=True)
+            current_data.drop(
+                index=list(range(0, current_size - self.window_size)), inplace=True
+            )
             current_data.reset_index(drop=True, inplace=True)
 
         self.current[dataset_name] = current_data
 
         if current_size < window_size:
             logging.info(
-                f"Not enough data for measurement: {current_size} of {window_size}." f" Waiting more data")
+                f"Not enough data for measurement: {current_size} of {window_size}."
+                f" Waiting more data"
+            )
             return
 
         next_run_time = self.next_run_time.get(dataset_name)
 
         if next_run_time is not None and next_run_time > datetime.datetime.now():
-            logging.info("Next run for dataset %s at %s",
-                         dataset_name, next_run_time)
+            logging.info("Next run for dataset %s at %s", dataset_name, next_run_time)
             return
 
         self.next_run_time[dataset_name] = datetime.datetime.now() + datetime.timedelta(
             seconds=self.calculation_period_sec
         )
         self.monitoring[dataset_name].execute(
-            self.reference[dataset_name], current_data, self.column_mapping[dataset_name]
+            self.reference[dataset_name],
+            current_data,
+            self.column_mapping[dataset_name],
         )
 
         for metric, value, labels in self.monitoring[dataset_name].metrics():
@@ -201,7 +203,8 @@ class MonitoringService:
 
             if found is None:
                 found = prometheus_client.Gauge(
-                    metric_key, "", list(sorted(labels.keys())))
+                    metric_key, "", list(sorted(labels.keys()))
+                )
                 self.metrics[metric_key] = found
 
             try:
@@ -209,8 +212,7 @@ class MonitoringService:
 
             except ValueError as error:
                 # ignore errors sending other metrics
-                logging.error(
-                    "Value error for metric %s, error: ", metric_key, error)
+                logging.error("Value error for metric %s, error: ", metric_key, error)
 
 
 SERVICE: Optional[MonitoringService] = None
@@ -220,14 +222,17 @@ SERVICE: Optional[MonitoringService] = None
 def configure_service():
     # pylint: disable=global-statement
     global SERVICE
-    config_file_path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "config.yaml")
+    config_file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config.yaml"
+    )
     print(config_file_path)
 
     # try to find a config file, it should be generated via the data preparation script
     if not os.path.exists(config_file_path):
         logging.error("File %s does not exist", config_file_path)
-        exit("Cannot find a config file for the metrics service. Try to check README.md for setup instructions.")
+        exit(
+            "Cannot find a config file for the metrics service. Try to check README.md for setup instructions."
+        )
 
     with open(config_file_path, "rb") as config_file:
         config = yaml.safe_load(config_file)
@@ -236,25 +241,28 @@ def configure_service():
     datasets = {}
 
     for dataset_name, dataset_options in config["datasets"].items():
-        reference_file = dataset_options['reference_file']
+        reference_file = dataset_options["reference_file"]
         logging.info(
-            f"Load reference data for dataset {dataset_name} from {reference_file}")
+            f"Load reference data for dataset {dataset_name} from {reference_file}"
+        )
 
         reference_data, target = read_data(reference_file)
 
-        reference_data['target'] = target
+        reference_data["target"] = target
 
         datasets[dataset_name] = LoadedDataset(
             name=dataset_name,
             references=reference_data,
-            monitors=dataset_options['monitors'],
-            column_mapping=ColumnMapping(**dataset_options["column_mapping"])
+            monitors=dataset_options["monitors"],
+            column_mapping=ColumnMapping(**dataset_options["column_mapping"]),
         )
-        logging.info("Reference is loaded for dataset %s: %s rows",
-                     dataset_name, len(reference_data))
+        logging.info(
+            "Reference is loaded for dataset %s: %s rows",
+            dataset_name,
+            len(reference_data),
+        )
 
-    SERVICE = MonitoringService(
-        datasets=datasets, window_size=options.window_size)
+    SERVICE = MonitoringService(datasets=datasets, window_size=options.window_size)
 
 
 @app.route("/iterate/<dataset>", methods=["POST"])
@@ -265,8 +273,7 @@ def iterate(dataset: str):
     if SERVICE is None:
         return "Internal Server Error: service not found", 500
 
-    SERVICE.iterate(dataset_name=dataset,
-                    new_rows=pd.DataFrame.from_dict(item))
+    SERVICE.iterate(dataset_name=dataset, new_rows=pd.DataFrame.from_dict(item))
     return "ok"
 
 
