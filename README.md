@@ -30,14 +30,28 @@
 
 ### Setup and Run system
 
+---
+
 #### Exploratory Data Analysis
+
+---
 
 #### Experiment Tracking and Model Registry
 
+---
+
 #### Training Pipeline Orchestration
+
+---
 
 #### Prediction Service and Monitoring
 
+---
+
 #### MLOps Best Practices applied
 
+---
+
 ### Concluding remarks
+
+---
