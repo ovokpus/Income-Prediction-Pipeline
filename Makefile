@@ -8,7 +8,8 @@ quality_checks:
 	pylint --recursive=y .
 
 build: quality_checks test
-	# LOCAL_TAG=`date + "%Y-%m-%d-%H-%M"`
-	# LOCAL_IMAGE_NAME=stre
+	docker-compose build
+
+	docker-compose up
 
 publish: build
