@@ -47,7 +47,18 @@ Stop it with `Ctrl+C`, or `docker compose down` from another shell. Add `-v` if 
 
 The part-time example scores in the lower band. The experienced-manager example scores in the higher band. Those two fixtures are also what `tests/test_prediction_api.py` checks.
 
-Drift charts need a handful of scores. The Evidently window size is 5, so send at least five predictions, then refresh Grafana. Dashboards are provisioned from `evidently_service/dashboards/`.
+### Demo
+
+Walk the app and the monitoring links in one pass. Drift panels stay empty until Evidently has seen five scores, so predict a few times before you open Grafana. The monitor keeps a window of the last five calls.
+
+1. Open http://localhost:8501. The sidebar is the map: **Grafana dashboards**, **Prometheus targets**, and **Evidently metrics**. The green line means `GET /health` on the prediction service succeeded.
+2. Choose **Example: experienced manager**, click **Load example**, then **Predict income**. The card should read over $50,000, with a probability near 78%.
+3. Scroll to **Recent predictions**. The newest row is that call. It was stored in MongoDB.
+4. Open Grafana at http://localhost:3000 and sign in as `admin` / `admin`. Open **Evidently Data Drift Dashboard** and set `dataset_name` to `census`. You should see a drifted-feature count, not an empty panel. This URL opens that view directly: http://localhost:3000/d/U54hsxv7k/evidently-data-drift-dashboard?orgId=1&var-dataset_name=census
+5. Open http://localhost:9091/targets. The `service` job should be up. That is Prometheus scraping Evidently.
+6. Open http://localhost:8085/metrics and look for lines that start with `evidently:data_drift`. Same numbers, as text.
+
+Live requests do not include the true income label, so this Compose stack calculates feature drift only. Charts that need a ground-truth label are left for a batch job that joins scores back to labels. That split is in `PRODUCTIONIZING.md`.
 
 ### Run the web app on its own
 
@@ -161,6 +172,8 @@ sequenceDiagram
 Evidently's reference set is `evidently_service/datasets/adult-train.csv`. It is a stratified sample of the UCI Adult training file: 600 rows from each income class, `random_state=12`, with the original column names and the leading spaces intact. It is there so monitoring starts without a private data drop. It is not the full training set.
 
 Prometheus scrapes `evidently_service:8085` every 10 seconds. Grafana reads Prometheus at `http://prometheus:9090` inside the Compose network and is published on port 3000. An empty `alert.rules` file is mounted so Prometheus can boot. Nothing pages you yet. That is called out in `PRODUCTIONIZING.md`.
+
+The local monitor is data drift. A score does not come with the true label, so classification-performance charts are not run here. Rare census categories that never appear in the reference sample are filled with zero so Evidently can still index the full column list. The [Demo](#demo) section is the click path.
 
 ---
 

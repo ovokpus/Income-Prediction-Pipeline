@@ -184,10 +184,13 @@ class MonitoringService:
         self.next_run_time[dataset_name] = datetime.datetime.now() + datetime.timedelta(
             seconds=self.calculation_period_sec
         )
+        column_mapping = self.column_mapping[dataset_name]
+        ensure_mapped_columns(self.reference[dataset_name], column_mapping)
+        ensure_mapped_columns(current_data, column_mapping)
         self.monitoring[dataset_name].execute(
             self.reference[dataset_name],
             current_data,
-            self.column_mapping[dataset_name],
+            column_mapping,
         )
 
         for metric, value, labels in self.monitoring[dataset_name].metrics():
@@ -214,6 +217,33 @@ class MonitoringService:
             except ValueError as error:
                 # ignore errors sending other metrics
                 logging.error("Value error for metric %s, error: ", metric_key, error)
+
+
+def _mapped_feature_names(column_mapping):
+    """Feature names from either a config dict or an Evidently ColumnMapping."""
+    if isinstance(column_mapping, dict):
+        categorical = column_mapping.get("categorical_features") or []
+        numerical = column_mapping.get("numerical_features") or []
+    else:
+        categorical = column_mapping.categorical_features or []
+        numerical = column_mapping.numerical_features or []
+    return list(categorical) + list(numerical)
+
+
+def ensure_mapped_columns(frame, column_mapping):
+    """Add mapping columns this frame never observed.
+
+    Live rows and the reference sample only contain categories that showed
+    up. Evidently indexes the full column mapping and raises if a rare
+    census dummy is missing. An absent one-hot column is zero.
+    """
+    names = _mapped_feature_names(column_mapping)
+    for name in names:
+        if name not in frame.columns:
+            frame[name] = 0
+    if names:
+        frame[names] = frame[names].fillna(0)
+    return frame
 
 
 SERVICE: Optional[MonitoringService] = None
@@ -262,6 +292,7 @@ def configure_service():
         reference_data, target = read_data(reference_file)
 
         reference_data["target"] = target
+        ensure_mapped_columns(reference_data, dataset_options["column_mapping"])
 
         datasets[dataset_name] = LoadedDataset(
             name=dataset_name,
