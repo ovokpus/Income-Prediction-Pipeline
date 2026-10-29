@@ -9,6 +9,7 @@ The service gets a reference dataset from reference.csv file and process current
 
 Metrics calculation results are available with `GET /metrics` HTTP method in Prometheus compatible format.
 """
+
 import dataclasses
 import datetime
 import hashlib
@@ -218,8 +219,20 @@ class MonitoringService:
 SERVICE: Optional[MonitoringService] = None
 
 
-@app.before_first_request
+def _resolve_reference_path(reference_file: str) -> str:
+    """Resolve dataset paths against this file so Docker and local runs agree."""
+    if os.path.isabs(reference_file):
+        return reference_file
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.normpath(os.path.join(base_dir, reference_file))
+
+
 def configure_service():
+    """Load the reference sample and build Evidently monitors.
+
+    This runs at import time. Waiting for the first request made the first
+    prediction pay for SMOTE on the reference set, and often timed out.
+    """
     # pylint: disable=global-statement
     global SERVICE
     config_file_path = os.path.join(
@@ -241,7 +254,7 @@ def configure_service():
     datasets = {}
 
     for dataset_name, dataset_options in config["datasets"].items():
-        reference_file = dataset_options["reference_file"]
+        reference_file = _resolve_reference_path(dataset_options["reference_file"])
         logging.info(
             f"Load reference data for dataset {dataset_name} from {reference_file}"
         )
@@ -263,6 +276,15 @@ def configure_service():
         )
 
     SERVICE = MonitoringService(datasets=datasets, window_size=options.window_size)
+
+
+configure_service()
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Liveness probe. Reference data is loaded before this can answer."""
+    return flask.jsonify({"status": "ok", "datasets": list(SERVICE.reference)})
 
 
 @app.route("/iterate/<dataset>", methods=["POST"])

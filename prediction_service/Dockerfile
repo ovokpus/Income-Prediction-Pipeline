@@ -4,7 +4,11 @@ RUN pip install -U pip
 
 RUN pip install pipenv
 
-ENV MODEL_RUN_ID="434e8043496c4d61ae917c1f0ef843ba"
+# local reads models/clf.bin. Set MODEL_SOURCE=mlflow and MLFLOW_TRACKING_URI
+# to pull runs/<MODEL_RUN_ID>/models_mlflow instead.
+ENV MODEL_SOURCE=local
+ENV MODEL_VERSION=local-clf.bin
+ENV MODEL_RUN_ID=434e8043496c4d61ae917c1f0ef843ba
 
 WORKDIR /app
 

@@ -1,5 +1,3 @@
-version: '3.7'
-
 volumes:
     prometheus_data: {}
     grafana_data: {}
@@ -10,6 +8,24 @@ networks:
   back-tier:
 
 services:
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    depends_on:
+      prediction_service:
+        condition: service_healthy
+    environment:
+      PREDICTION_SERVICE_URL: "http://prediction_service:9696"
+      GRAFANA_URL: "http://localhost:3000"
+      PROMETHEUS_URL: "http://localhost:9091"
+      EVIDENTLY_URL: "http://localhost:8085/metrics"
+    ports:
+      - "8501:8501"
+    networks:
+      - front-tier
+    restart: unless-stopped
+
   prediction_service:
     build:
       context: prediction_service
@@ -18,13 +34,24 @@ services:
       - evidently_service
       - mongo
     environment:
-      EVIDENTLY_SERVICE: "http://evidently_service.:8085"
-      MONGODB_ADDRESS: "mongodb://mongo.:27017/"
+      MODEL_SOURCE: "local"
+      MODEL_VERSION: "local-clf.bin"
+      # Service DNS names on the Compose network. A trailing dot makes the
+      # name absolute and Docker's DNS will not resolve it.
+      EVIDENTLY_SERVICE: "http://evidently_service:8085"
+      MONGODB_ADDRESS: "mongodb://mongo:27017/"
     ports:
       - "9696:9696"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9696/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
     networks:
       - back-tier
       - front-tier
+
   evidently_service:
     build:
       context: evidently_service
@@ -44,6 +71,7 @@ services:
     image: prom/prometheus
     volumes:
       - ./evidently_service/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./evidently_service/config/alert.rules:/etc/prometheus/alert.rules
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -59,6 +87,10 @@ services:
     user: "472"
     depends_on:
       - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
       - "3000:3000"
     volumes:
@@ -70,6 +102,7 @@ services:
       - back-tier
       - front-tier
     restart: always
+
   mongo:
     image: mongo
     ports:

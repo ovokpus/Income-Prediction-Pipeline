@@ -1,18 +1,38 @@
 """
-Unit tests for data processing
+Unit tests for data processing.
+
+These checks need the original Adult CSVs and imbalanced-learn. The public
+checkout does not include ``data/``, so the tests skip instead of failing
+collection on a fresh clone.
 """
+
+# isort: skip_file
+import os
+
 import pandas as pd
+import pytest
+
+imblearn = pytest.importorskip("imblearn")
 from sklearn.feature_extraction import DictVectorizer
 
 from B_experimentTracking import preprocess
 
-test_features = pd.read_csv(
-    "/home/ovokpus/Income-Prediction-Pipeline/tests/df_new_test.csv"
-)
-test_target = pd.read_csv(
-    "/home/ovokpus/Income-Prediction-Pipeline/tests/y_train_test.csv"
-)
+FIXTURE_FEATURES = "/home/ovokpus/Income-Prediction-Pipeline/tests/df_new_test.csv"
+FIXTURE_TARGET = "/home/ovokpus/Income-Prediction-Pipeline/tests/y_train_test.csv"
 ACTUAL_DATA_PATH = "/home/ovokpus/Income-Prediction-Pipeline/data/adult-train.csv"
+
+if not (
+    os.path.exists(FIXTURE_FEATURES)
+    and os.path.exists(FIXTURE_TARGET)
+    and os.path.exists(ACTUAL_DATA_PATH)
+):
+    pytest.skip(
+        "Adult fixtures are not in this checkout",
+        allow_module_level=True,
+    )
+
+test_features = pd.read_csv(FIXTURE_FEATURES)
+test_target = pd.read_csv(FIXTURE_TARGET)
 
 
 def test_read_data():
