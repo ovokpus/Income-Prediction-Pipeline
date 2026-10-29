@@ -1,6 +1,10 @@
 datasets:
   census:
     column_mapping:
+      # Live requests carry a prediction and no ground-truth label.
+      # Leave both unset so drift compares the applicant features only.
+      target: null
+      prediction: null
       categorical_features:
         - 'workClass_ ?'
         - 'workClass_ Federal-gov'
@@ -74,10 +78,9 @@ datasets:
       header: true
       separator: ','
     monitors:
+      # Classification performance needs a true label on each live row.
+      # The local stack watches feature drift only.
       - data_drift
-      - cat_target_drift
-      - classification_performance
-      - data_quality
     reference_file: ./datasets/adult-train.csv
 service:
   calculation_period_sec: 2

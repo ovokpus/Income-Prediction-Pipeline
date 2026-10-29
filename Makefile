@@ -8,9 +8,10 @@ quality_checks:
 	pylint --recursive=y .
 
 build: quality_checks test
-	docker-compose build
+	docker compose build
 
-	docker-compose up
+up:
+	docker compose up --build
 
 publish: build
 

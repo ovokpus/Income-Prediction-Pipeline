@@ -136,6 +136,8 @@ mlruns/
 *.parquet
 *.html
 *.csv
+# Local monitoring reference sample. See README.
+!evidently_service/datasets/adult-train.csv
 
 .venv
 venv
