@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/banner.jpg" alt="Row of glass prisms on stands leading to a brass pressure gauge" width="100%"></p>
+
 # Income-Prediction-Pipeline
 
 ---
