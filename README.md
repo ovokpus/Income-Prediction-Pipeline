@@ -10,6 +10,10 @@ This is a demo stack. The census categories are from 1994, and the model is not 
 
 ---
 
+## Business case
+
+Many data teams have models that work in a notebook but never reach production because the packaging, testing and serving are missing. This repo shows that path end to end, from a tested scikit-learn pipeline to a versioned package and an API, using the public census income dataset. Its value is the MLOps pattern, not the model, which should not be used to make decisions about real people. [docs/BUSINESS_CASE.md](docs/BUSINESS_CASE.md) explains the case and its limits.
+
 ## Run the whole stack with Docker
 
 You need Docker with the Compose plugin (`docker compose`).
