@@ -42,7 +42,7 @@ These figures are **illustrative assumptions**.
 | Production tabular models | 5 | Assumption |
 | Data-scientist days per model per year spent on manual retraining, redeploying and investigating "why did scores change?" | 15 | Assumption |
 | Share of that time removed by tracked, scheduled retraining and drift dashboards | 50% | Assumption |
-| Data-scientist daily cost | US$563 | BLS May 2024 median for data scientists is $112,590 a year, about $54 an hour ([BLS](https://www.bls.gov/ooh/math/data-scientists.htm)). Multiplied by 8 hours and an assumed 1.3 for overhead. |
+| Data-scientist daily cost | US$563 | BLS May 2024 median for data scientists is $112,590 a year, about $54 an hour ([BLS](https://www.bls.gov/news.release/archives/ocwage_04022025.pdf)). Multiplied by 8 hours and an assumed 1.3 for overhead. |
 
 Saving: 5 × 15 × 50% = **37.5 days, about US$21,000 a year**, before hosting costs. The harder-to-price benefit is catching a stale model before it costs money.
 
@@ -65,4 +65,4 @@ Saving: 5 × 15 × 50% = **37.5 days, about US$21,000 a year**, before hosting c
 
 - UCI Machine Learning Repository, Adult dataset: https://archive.ics.uci.edu/dataset/2/adult
 - Gartner, Data Quality topic page ($12.9M figure): https://www.gartner.com/en/data-analytics/topics/data-quality
-- U.S. Bureau of Labor Statistics, Data Scientists: https://www.bls.gov/ooh/math/data-scientists.htm
+- U.S. Bureau of Labor Statistics, OEWS May 2024 (Data Scientists): https://www.bls.gov/news.release/archives/ocwage_04022025.pdf
