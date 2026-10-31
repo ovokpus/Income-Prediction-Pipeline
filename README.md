@@ -1,6 +1,6 @@
-<p align="center"><img src="assets/banner.jpg" alt="Row of glass prisms on stands leading to a brass pressure gauge" width="100%"></p>
-
 # Income Prediction Pipeline
+
+<p align="center"><img src="assets/banner.jpg" alt="Row of glass prisms on stands leading to a brass pressure gauge" width="100%"></p>
 
 A small MLOps system that guesses one thing: does this person earn more than $50,000 a year?
 
